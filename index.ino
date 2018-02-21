@@ -20,10 +20,13 @@ int BLUE_PIN = 9;
 int DOOR_PIN = 8;
 int BUTTON_SPRAY = 4;
 int BUTTON_ANALYSE = 3;
-int BUTTON_RESET = 2;
+int BUTTON_MENU = 2;
 
+int DOOR_STATUS = 0;
+bool DOOR_STATUS_CHANGED = false;
 int PREVIOUS_ACTION = 0;
 int CURRENT_ACTION = millis();
+int FADE_STEPS = 50;
 
 /**
  * Sensors  
@@ -32,20 +35,44 @@ int CURRENT_ACTION = millis();
 class Sensors {
   public:
   /**
-   * Hardware sensors
+   * Doors
    */
   static bool is_door_closed() {
-    return !(bool)digitalRead(DOOR_PIN);
+    return DOOR_STATUS = !(bool)digitalRead(DOOR_PIN);
+  }
+  static bool is_door_open() {
+    return !Sensors::is_door_closed();
   }
   static bool is_door_changed() {
-    return true;
+    int previous_door_status = DOOR_STATUS;
+    int current_door_status = Sensors::is_door_closed();
+    if (previous_door_status != current_door_status) { DOOR_STATUS_CHANGED = true; }
+    return DOOR_STATUS_CHANGED;
   }
+  static void reset_door_status() {
+    DOOR_STATUS_CHANGED = false;
+  }
+
+  /**
+   * lights
+   */
   static bool is_light_on() {
     return true;
   }
+  static bool is_light_off() {
+    return !Sensors::is_light_on();
+  }
+
   static bool is_person_on_toilet() {
     return true;
   }
+  static bool is_person_not_on_toilet() {
+    return !Sensors::is_person_on_toilet();
+  }
+
+  /**
+   * Buttons
+   */
   static bool is_button_pressed(int button) {
     return !(bool)digitalRead(button);
   }
@@ -73,15 +100,14 @@ void switch_status(int new_state) {
   current_state = new_state;
   /** switch led color */
   switch(current_state) {
-    case state::NOT_IN_USE: { set_rgb_led_color(255, 0, 0); Serial.println("status switched to: NOT_IN_USE."); break; }
-    case state::ANALYSING: { set_rgb_led_color(0, 255, 0); Serial.println("status switched to: ANALYSING."); break; }
-    case state::IN_USE_NUMBER1: { set_rgb_led_color(0, 0, 255); Serial.println("status switched to: IN_USE_NUMBER1."); break; }
-    case state::IN_USE_NUMBER2: { set_rgb_led_color(255, 255, 0); Serial.println("status switched to: IN_USE_NUMBER2."); break; }
-    case state::IN_USE_CLEANING: { set_rgb_led_color(80, 0, 80); Serial.println("status switched to: IN_USE_CLEANING."); break; }
-    case state::SPRAYING: { set_rgb_led_color(0, 255, 255); Serial.println("status switched to: SPRAYING."); break; }
-    case state::MENU_ACTIVE: { set_rgb_led_color(0, 20, 20); Serial.println("status switched to: MENU_ACTIVE."); break; }
+    case state::NOT_IN_USE: { set_rgb_led_color(255, 0, 0); Serial.println("status switched to: NOT_IN_USE."); Sensors::reset_time_passed(); break; }
+    case state::ANALYSING: { set_rgb_led_color(0, 255, 0); Serial.println("status switched to: ANALYSING."); Sensors::reset_time_passed(); break; }
+    case state::IN_USE_NUMBER1: { set_rgb_led_color(0, 0, 255); Serial.println("status switched to: IN_USE_NUMBER1."); Sensors::reset_time_passed(); break; }
+    case state::IN_USE_NUMBER2: { set_rgb_led_color(255, 0, 255); Serial.println("status switched to: IN_USE_NUMBER2."); Sensors::reset_time_passed(); break; }
+    case state::IN_USE_CLEANING: { set_rgb_led_color(255, 255, 255); Serial.println("status switched to: IN_USE_CLEANING."); Sensors::reset_time_passed(); break; }
+    case state::SPRAYING: { set_rgb_led_color(255, 255, 255); Serial.println("status switched to: SPRAYING."); Sensors::reset_time_passed(); break; }
+    case state::MENU_ACTIVE: { set_rgb_led_color(0, 0, 0); Serial.println("status switched to: MENU_ACTIVE."); Sensors::reset_time_passed(); break; }
   }
-  Sensors::reset_time_passed();
 }
 
 /**
@@ -106,7 +132,7 @@ void setup()
   pinMode(DOOR_PIN, INPUT_PULLUP);
   pinMode(BUTTON_SPRAY, INPUT_PULLUP);
   pinMode(BUTTON_ANALYSE, INPUT_PULLUP);
-  pinMode(BUTTON_RESET, INPUT_PULLUP);
+  pinMode(BUTTON_MENU, INPUT_PULLUP);
 }
 
 /**
@@ -119,7 +145,7 @@ void loop()
    */
   if (Sensors::is_button_pressed(BUTTON_SPRAY)) { switch_status(state::SPRAYING); }
   if (Sensors::is_button_pressed(BUTTON_ANALYSE)) { switch_status(state::ANALYSING); }
-  if (Sensors::is_button_pressed(BUTTON_RESET)) { switch_status(state::NOT_IN_USE); }
+  if (Sensors::is_button_pressed(BUTTON_MENU)) { switch_status(state::MENU_ACTIVE); }
 
   /**
    * States
@@ -132,7 +158,7 @@ void loop()
     case state::NOT_IN_USE: 
     {
       // functions
-      if ( Sensors::is_time_passed(1000) ) { switch_status(state::ANALYSING); }
+      if ( Sensors::is_time_passed(3500) ) { switch_status(state::ANALYSING); }
       break;
     }
 
@@ -169,12 +195,27 @@ void loop()
      */
     case state::IN_USE_NUMBER1:
     {
+
+      /**
+       * check if done
+       */
       if (
-        Sensors::is_time_passed(5000) &&
+        Sensors::is_time_passed(2500) &&
         Sensors::is_door_changed()
       ) {
+        Sensors::reset_door_status();
         switch_status(state::SPRAYING);
       }
+
+      /**
+       * if it takes longer, it's probably a number 2
+       */
+      if (
+        Sensors::is_time_passed(5000)
+      ) {
+        switch_status(state::IN_USE_NUMBER2);
+      }
+
       break;
     }
 
@@ -184,7 +225,15 @@ void loop()
      */
     case state::IN_USE_NUMBER2:
     {
-      // functions
+      /**
+       * check if done
+       */
+      if (
+        Sensors::is_door_changed()
+      ) {
+        Sensors::reset_door_status();
+        switch_status(state::SPRAYING);
+      }
       break;
     }
 
@@ -204,28 +253,24 @@ void loop()
      */
     case state::SPRAYING:
     {
-      bool sprayed = false;
-      bool led_changed = false;
+      /**
+       * TEMPORARY: LIGHTS
+       */
+      int first_time = 1250, second_time = 1750, delay = 250;
+      if ( Sensors::is_time_passed(second_time + delay) ) { set_rgb_led_color(255, 255, 255); }
+      else if ( Sensors::is_time_passed(second_time) ) { set_rgb_led_color(255, 0, 0);  }
+      else if ( Sensors::is_time_passed(first_time + delay) ) { set_rgb_led_color(255, 255, 255); }
+      else if ( Sensors::is_time_passed(first_time) ) { set_rgb_led_color(255, 0, 0); }
 
       /**
-       *  First spray
-       *  @when - button press
+       *  Spray once
+       *  @when - TODO: button press
        *  @when - previous state is number 1
-       *  @when - previous state is number 2
        */
-      if ( Sensors::is_time_passed(2500)  && !sprayed) { 
-        if (!led_changed) { set_rgb_led_color(255, 0, 0); }
-        led_changed = true;
-        sprayed = true;
-      }
-      if ( Sensors::is_time_passed(2600)  && sprayed) { 
-        if (led_changed) { set_rgb_led_color(0, 255, 255); }
-        led_changed = false;
-        if (previous_state != state::IN_USE_NUMBER2) {
-          Sensors::reset_time_passed();
-          switch_status(state::ANALYSING);
-          break;
-        }
+      if (previous_state == state::IN_USE_NUMBER1 && Sensors::is_time_passed(first_time + delay + delay)) {
+        Serial.println("SPRAYED ONCE!");
+        switch_status(state::ANALYSING);
+        break;
       }
 
       /**
@@ -233,6 +278,11 @@ void loop()
        *  @when - previous state is number 2
        */
 
+      if (previous_state == state::IN_USE_NUMBER2 && Sensors::is_time_passed(second_time + delay + delay)) {
+        // TODO: SPRAYING TWICE
+        Serial.println("SPRAYED TWICE!");
+        switch_status(state::ANALYSING);
+      }
       break;
     }
 
