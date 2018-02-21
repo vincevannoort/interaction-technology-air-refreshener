@@ -30,6 +30,7 @@ void loop()
   switch(current_state) {
     /**
      * Not in use
+     * @state-change to analysing
      */
     case state.NOT_IN_USE: {
       // functions
@@ -38,6 +39,9 @@ void loop()
 
     /**
      * Analysing
+     * @state-change to number 1
+     * @state-change to number 2
+     * @state-change to cleaning
      */
     case state.ANALYSING:
     {
@@ -47,6 +51,7 @@ void loop()
 
     /**
      * Number 1
+     * @state-change to spray
      */
     case state.IN_USE_NUMBER1:
     {
@@ -56,6 +61,7 @@ void loop()
 
     /**
      * Number 2
+     * @state-change to spray
      */
     case state.IN_USE_NUMBER2:
     {
@@ -65,6 +71,7 @@ void loop()
 
     /**
      * Cleaning
+     * @state-change to not analysing
      */
     case state.IN_USE_CLEANING:
     {
@@ -74,6 +81,7 @@ void loop()
 
     /**
      * Spray shot
+     * @state-change to not in use
      */
     case state.TRIGGERED_SPRAY_SHOT:
     {
@@ -83,6 +91,8 @@ void loop()
 
     /**
      * Menu active
+     * @state-change to analysing
+     * @state-change to not in use
      */
     case state.MENU_ACTIVE:
     {
