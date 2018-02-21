@@ -11,15 +11,48 @@ enum state {
   TRIGGERED_SPRAY_SHOT,
   MENU_ACTIVE
 };
-int initial_state = state.NOT_IN_USE;
-int current_state = initial_state;
+int current_state = state::NOT_IN_USE;
+int RED_PIN = 11;
+int GREEN_PIN = 10;
+int BLUE_PIN = 9;
+
+/**
+ * functions
+ */
+void switchState(int new_state) {
+  current_state = new_state;
+  /** switch led color */
+  switch(current_state) {
+    case state::NOT_IN_USE: { set_rgb_led_color(255, 0, 0); break; }
+    case state::ANALYSING: { set_rgb_led_color(0, 255, 0); break; }
+    case state::IN_USE_NUMBER1: { set_rgb_led_color(0, 0, 255); break; }
+    case state::IN_USE_NUMBER2: { set_rgb_led_color(255, 255, 0); break; }
+    case state::IN_USE_CLEANING: { set_rgb_led_color(80, 0, 80); break; }
+    case state::TRIGGERED_SPRAY_SHOT: { set_rgb_led_color(0, 255, 255); break; }
+    case state::MENU_ACTIVE: { set_rgb_led_color(0, 20, 20); break; }
+  }
+  delay(1000);
+}
+
+/**
+ * RGB LED
+ */
+void set_rgb_led_color(int red, int green, int blue)
+{
+  analogWrite(RED_PIN, red);
+  analogWrite(GREEN_PIN, green);
+  analogWrite(BLUE_PIN, blue);
+}
 
 /**
  * setup
  */
 void setup()
 {
-
+  Serial.begin(9600);
+  pinMode(RED_PIN, OUTPUT);
+  pinMode(GREEN_PIN, OUTPUT);
+  pinMode(BLUE_PIN, OUTPUT);
 }
 
 /**
@@ -32,8 +65,10 @@ void loop()
      * Not in use
      * @state-change to analysing
      */
-    case state.NOT_IN_USE: {
+    case state::NOT_IN_USE: 
+    {
       // functions
+      switchState(state::ANALYSING);
       break;
     }
 
@@ -43,9 +78,10 @@ void loop()
      * @state-change to number 2
      * @state-change to cleaning
      */
-    case state.ANALYSING:
+    case state::ANALYSING:
     {
       // functions
+      switchState(state::NOT_IN_USE);
       break;
     }
 
@@ -53,7 +89,7 @@ void loop()
      * Number 1
      * @state-change to spray
      */
-    case state.IN_USE_NUMBER1:
+    case state::IN_USE_NUMBER1:
     {
       // functions
       break;
@@ -63,7 +99,7 @@ void loop()
      * Number 2
      * @state-change to spray
      */
-    case state.IN_USE_NUMBER2:
+    case state::IN_USE_NUMBER2:
     {
       // functions
       break;
@@ -73,7 +109,7 @@ void loop()
      * Cleaning
      * @state-change to not analysing
      */
-    case state.IN_USE_CLEANING:
+    case state::IN_USE_CLEANING:
     {
       // functions
       break;
@@ -83,7 +119,7 @@ void loop()
      * Spray shot
      * @state-change to not in use
      */
-    case state.TRIGGERED_SPRAY_SHOT:
+    case state::TRIGGERED_SPRAY_SHOT:
     {
       // functions
       break;
@@ -94,7 +130,7 @@ void loop()
      * @state-change to analysing
      * @state-change to not in use
      */
-    case state.MENU_ACTIVE:
+    case state::MENU_ACTIVE:
     {
       // functions
       break;
