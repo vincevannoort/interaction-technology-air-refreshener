@@ -1,0 +1,13 @@
+- [ ] Be able to distinguish between a ‘number one’ and a ‘number two’ use of the toilet (which in Dutch would be called a small message versus a big message).
+- [ ] Be able to distinguish between the cleaning of the toilet and other uses.
+- [ ] Spray once after a ‘number one’ use of the toilet, after a configurable delay.
+- [ ] Spray twice after a ‘number two’ use of the toilet, after a configurable delay.
+- [ ] Not spray after the cleaning of the toilet.
+- [ ] Spray once after pressing a manual override button, after a configurable delay. The manual override button should be a dedicated push button (single purpose).
+- [ ] Not spray at other times (i.e. during use, between uses).
+- [ ] Keep track of at least the following states: ‘not in use’, ‘in use – type of use unknown’, ‘in use – number 1 use’, ‘in use – number 2 use’, ‘in use – cleaning’, ‘triggered – spray-shot imminent’ and ‘operator menu active’.
+- [ ] Indicate its current state using the leds.
+- [ ] Display the number of remaining spray-shots on the LCD display during normal operation. (A full can is supposed to contain 2400 spray-shots.)
+- [ ] Display the ambient temperature on the LCD display during normal operation. This value should be refreshed regularly (at least once every 2 seconds).
+- [ ] Offer a menu system using the LCD display and two push buttons to configure the spraying delay and to reset the number of remaining spray-shots.
+- [ ] Suspend all other functionality whenever the menu system is active (status is ‘operator menu active’). Upon exit of the menu system, the system should return to the ‘not in use’ status.
