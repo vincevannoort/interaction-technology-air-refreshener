@@ -23,13 +23,13 @@ void switchState(int new_state) {
   current_state = new_state;
   /** switch led color */
   switch(current_state) {
-    case state::NOT_IN_USE: { set_rgb_led_color(255, 0, 0); break; }
-    case state::ANALYSING: { set_rgb_led_color(0, 255, 0); break; }
-    case state::IN_USE_NUMBER1: { set_rgb_led_color(0, 0, 255); break; }
-    case state::IN_USE_NUMBER2: { set_rgb_led_color(255, 255, 0); break; }
-    case state::IN_USE_CLEANING: { set_rgb_led_color(80, 0, 80); break; }
-    case state::TRIGGERED_SPRAY_SHOT: { set_rgb_led_color(0, 255, 255); break; }
-    case state::MENU_ACTIVE: { set_rgb_led_color(0, 20, 20); break; }
+    case state::NOT_IN_USE: { set_rgb_led_color(255, 0, 0); Serial.println("status switched to: NOT_IN_USE."); break; }
+    case state::ANALYSING: { set_rgb_led_color(0, 255, 0); Serial.println("status switched to: ANALYSING."); break; }
+    case state::IN_USE_NUMBER1: { set_rgb_led_color(0, 0, 255); Serial.println("status switched to: IN_USE_NUMBER1."); break; }
+    case state::IN_USE_NUMBER2: { set_rgb_led_color(255, 255, 0); Serial.println("status switched to: IN_USE_NUMBER2."); break; }
+    case state::IN_USE_CLEANING: { set_rgb_led_color(80, 0, 80); Serial.println("status switched to: IN_USE_CLEANING."); break; }
+    case state::TRIGGERED_SPRAY_SHOT: { set_rgb_led_color(0, 255, 255); Serial.println("status switched to: TRIGGERED_SPRAY_SHOT."); break; }
+    case state::MENU_ACTIVE: { set_rgb_led_color(0, 20, 20); Serial.println("status switched to: MENU_ACTIVE."); break; }
   }
   delay(1000);
 }
