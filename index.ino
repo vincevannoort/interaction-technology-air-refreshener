@@ -3,6 +3,7 @@
  */
 bool DEBUG = true;
 enum state {
+  SETUP,
   NOT_IN_USE,
   ANALYSING,
   IN_USE_NUMBER1,
@@ -12,7 +13,7 @@ enum state {
   MENU_ACTIVE
 };
 
-int previous_state = state::NOT_IN_USE;
+int previous_state = state::SETUP;
 int current_state = state::NOT_IN_USE;
 int RED_PIN = 11;
 int GREEN_PIN = 10;
@@ -88,7 +89,7 @@ class Sensors {
     return false;
   }
   static void reset_time_passed() {
-    PREVIOUS_ACTION = CURRENT_ACTION;
+    PREVIOUS_ACTION = millis();
   }
 };
 
@@ -96,6 +97,9 @@ class Sensors {
  * functions
  */
 void switch_status(int new_state) {
+  /** prevent double switching */
+  if (current_state == new_state) { return; }
+
   previous_state = current_state;
   current_state = new_state;
   /** switch led color */
@@ -108,6 +112,13 @@ void switch_status(int new_state) {
     case state::SPRAYING: { set_rgb_led_color(255, 255, 255); Serial.println("status switched to: SPRAYING."); Sensors::reset_time_passed(); break; }
     case state::MENU_ACTIVE: { set_rgb_led_color(0, 0, 0); Serial.println("status switched to: MENU_ACTIVE."); Sensors::reset_time_passed(); break; }
   }
+}
+
+void spray_air_refreshener() {
+  set_rgb_led_color(255, 0, 0);
+  delay(500);
+  set_rgb_led_color(255, 255, 255);
+  delay(500);
 }
 
 /**
@@ -253,22 +264,17 @@ void loop()
      */
     case state::SPRAYING:
     {
-      /**
-       * TEMPORARY: LIGHTS
-       */
-      int first_time = 1250, second_time = 1750, delay = 250;
-      if ( Sensors::is_time_passed(second_time + delay) ) { set_rgb_led_color(255, 255, 255); }
-      else if ( Sensors::is_time_passed(second_time) ) { set_rgb_led_color(255, 0, 0);  }
-      else if ( Sensors::is_time_passed(first_time + delay) ) { set_rgb_led_color(255, 255, 255); }
-      else if ( Sensors::is_time_passed(first_time) ) { set_rgb_led_color(255, 0, 0); }
+      // show that in spraying state
+      delay(500);
 
       /**
        *  Spray once
        *  @when - TODO: button press
        *  @when - previous state is number 1
        */
-      if (previous_state == state::IN_USE_NUMBER1 && Sensors::is_time_passed(first_time + delay + delay)) {
+      if (previous_state == state::IN_USE_NUMBER1 || previous_state == state::ANALYSING) {
         Serial.println("SPRAYED ONCE!");
+        spray_air_refreshener();
         switch_status(state::ANALYSING);
         break;
       }
@@ -278,9 +284,11 @@ void loop()
        *  @when - previous state is number 2
        */
 
-      if (previous_state == state::IN_USE_NUMBER2 && Sensors::is_time_passed(second_time + delay + delay)) {
+      if (previous_state == state::IN_USE_NUMBER2) {
         // TODO: SPRAYING TWICE
         Serial.println("SPRAYED TWICE!");
+        spray_air_refreshener();
+        spray_air_refreshener();
         switch_status(state::ANALYSING);
       }
       break;
