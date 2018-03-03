@@ -36,7 +36,7 @@ int FADE_STEPS = 50;
 class Sensors {
   public:
   /**
-   * Doors
+   * Magnetic door sensor
    */
   static bool is_door_closed() {
     return DOOR_STATUS = !(bool)digitalRead(DOOR_PIN);
@@ -55,7 +55,7 @@ class Sensors {
   }
 
   /**
-   * lights
+   * Light sensor
    */
   static bool is_light_on() {
     return true;
@@ -64,6 +64,9 @@ class Sensors {
     return !Sensors::is_light_on();
   }
 
+  /**
+   * Distance sensor
+   */
   static bool is_person_on_toilet() {
     return true;
   }
