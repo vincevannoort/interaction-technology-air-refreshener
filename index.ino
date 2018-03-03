@@ -19,6 +19,8 @@ int RED_PIN = 11;
 int GREEN_PIN = 10;
 int BLUE_PIN = 9;
 int DOOR_PIN = 8;
+int LIGHT_PIN = 0;
+int MOTION_PIN = 7;
 int BUTTON_SPRAY = 4;
 int BUTTON_ANALYSE = 3;
 int BUTTON_MENU = 2;
@@ -35,6 +37,15 @@ int FADE_STEPS = 50;
  */
 class Sensors {
   public:
+  /**
+   * Status RGB led
+   */
+  static void set_rgb_led_color(int red, int green, int blue) {
+    analogWrite(RED_PIN, red);
+    analogWrite(GREEN_PIN, green);
+    analogWrite(BLUE_PIN, blue);
+  }
+
   /**
    * Magnetic door sensor
    */
@@ -57,18 +68,20 @@ class Sensors {
   /**
    * Light sensor
    */
+  static const int light_on_threshold = 1000;
   static bool is_light_on() {
-    return true;
+    return analogRead(LIGHT_PIN) > Sensors::light_on_threshold;
   }
   static bool is_light_off() {
     return !Sensors::is_light_on();
   }
 
   /**
-   * Distance sensor
+   * Motion sensor
    */
   static bool is_person_on_toilet() {
     return true;
+    // return digitalRead(MOTION_PIN);
   }
   static bool is_person_not_on_toilet() {
     return !Sensors::is_person_on_toilet();
@@ -94,7 +107,21 @@ class Sensors {
   static void reset_time_passed() {
     PREVIOUS_ACTION = millis();
   }
+
+  /**
+   * Air refreshener
+   */
+  static int amount_of_air_refreshener_sprays_left;
+  static void spray_air_refreshener() {
+    Sensors::amount_of_air_refreshener_sprays_left--;
+    Sensors::set_rgb_led_color(255, 0, 0);
+    delay(500);
+    Sensors::set_rgb_led_color(255, 255, 255);
+    delay(500);
+  }
 };
+// setup amount of sprays left
+int Sensors::amount_of_air_refreshener_sprays_left = 2400;
 
 /**
  * functions
@@ -107,31 +134,14 @@ void switch_status(int new_state) {
   current_state = new_state;
   /** switch led color */
   switch(current_state) {
-    case state::NOT_IN_USE: { set_rgb_led_color(255, 0, 0); Serial.println("status switched to: NOT_IN_USE."); Sensors::reset_time_passed(); break; }
-    case state::ANALYSING: { set_rgb_led_color(0, 255, 0); Serial.println("status switched to: ANALYSING."); Sensors::reset_time_passed(); break; }
-    case state::IN_USE_NUMBER1: { set_rgb_led_color(0, 0, 255); Serial.println("status switched to: IN_USE_NUMBER1."); Sensors::reset_time_passed(); break; }
-    case state::IN_USE_NUMBER2: { set_rgb_led_color(255, 0, 255); Serial.println("status switched to: IN_USE_NUMBER2."); Sensors::reset_time_passed(); break; }
-    case state::IN_USE_CLEANING: { set_rgb_led_color(255, 255, 255); Serial.println("status switched to: IN_USE_CLEANING."); Sensors::reset_time_passed(); break; }
-    case state::SPRAYING: { set_rgb_led_color(255, 255, 255); Serial.println("status switched to: SPRAYING."); Sensors::reset_time_passed(); break; }
-    case state::MENU_ACTIVE: { set_rgb_led_color(0, 0, 0); Serial.println("status switched to: MENU_ACTIVE."); Sensors::reset_time_passed(); break; }
+    case state::NOT_IN_USE: { Sensors::set_rgb_led_color(255, 0, 0); Serial.println("status switched to: NOT_IN_USE."); Sensors::reset_time_passed(); break; }
+    case state::ANALYSING: { Sensors::set_rgb_led_color(0, 255, 0); Serial.println("status switched to: ANALYSING."); Sensors::reset_time_passed(); break; }
+    case state::IN_USE_NUMBER1: { Sensors::set_rgb_led_color(0, 0, 255); Serial.println("status switched to: IN_USE_NUMBER1."); Sensors::reset_time_passed(); break; }
+    case state::IN_USE_NUMBER2: { Sensors::set_rgb_led_color(255, 0, 255); Serial.println("status switched to: IN_USE_NUMBER2."); Sensors::reset_time_passed(); break; }
+    case state::IN_USE_CLEANING: { Sensors::set_rgb_led_color(255, 255, 255); Serial.println("status switched to: IN_USE_CLEANING."); Sensors::reset_time_passed(); break; }
+    case state::SPRAYING: { Sensors::set_rgb_led_color(255, 255, 255); Serial.println("status switched to: SPRAYING."); Sensors::reset_time_passed(); break; }
+    case state::MENU_ACTIVE: { Sensors::set_rgb_led_color(0, 0, 0); Serial.println("status switched to: MENU_ACTIVE."); Sensors::reset_time_passed(); break; }
   }
-}
-
-void spray_air_refreshener() {
-  set_rgb_led_color(255, 0, 0);
-  delay(500);
-  set_rgb_led_color(255, 255, 255);
-  delay(500);
-}
-
-/**
- * RGB LED
- */
-void set_rgb_led_color(int red, int green, int blue)
-{
-  analogWrite(RED_PIN, red);
-  analogWrite(GREEN_PIN, green);
-  analogWrite(BLUE_PIN, blue);
 }
 
 /**
@@ -139,11 +149,14 @@ void set_rgb_led_color(int red, int green, int blue)
  */
 void setup()
 {
+  // setup leds and serial
   Serial.begin(9600);
   pinMode(RED_PIN, OUTPUT);
   pinMode(GREEN_PIN, OUTPUT);
   pinMode(BLUE_PIN, OUTPUT);
   pinMode(DOOR_PIN, INPUT_PULLUP);
+  pinMode(LIGHT_PIN, INPUT);
+  pinMode(MOTION_PIN, INPUT);
   pinMode(BUTTON_SPRAY, INPUT_PULLUP);
   pinMode(BUTTON_ANALYSE, INPUT_PULLUP);
   pinMode(BUTTON_MENU, INPUT_PULLUP);
@@ -215,7 +228,8 @@ void loop()
        */
       if (
         Sensors::is_time_passed(2500) &&
-        Sensors::is_door_changed()
+        Sensors::is_door_changed() &&
+        Sensors::is_light_off()
       ) {
         Sensors::reset_door_status();
         switch_status(state::SPRAYING);
@@ -243,7 +257,8 @@ void loop()
        * check if done
        */
       if (
-        Sensors::is_door_changed()
+        Sensors::is_door_changed() &&
+        Sensors::is_light_off()
       ) {
         Sensors::reset_door_status();
         switch_status(state::SPRAYING);
@@ -277,7 +292,7 @@ void loop()
        */
       if (previous_state == state::IN_USE_NUMBER1 || previous_state == state::ANALYSING) {
         Serial.println("SPRAYED ONCE!");
-        spray_air_refreshener();
+        Sensors::spray_air_refreshener();
         switch_status(state::ANALYSING);
         break;
       }
@@ -290,8 +305,8 @@ void loop()
       if (previous_state == state::IN_USE_NUMBER2) {
         // TODO: SPRAYING TWICE
         Serial.println("SPRAYED TWICE!");
-        spray_air_refreshener();
-        spray_air_refreshener();
+        Sensors::spray_air_refreshener();
+        Sensors::spray_air_refreshener();
         switch_status(state::ANALYSING);
       }
       break;
