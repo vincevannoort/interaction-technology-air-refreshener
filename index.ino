@@ -1,3 +1,6 @@
+#include <OneWire.h>
+#include <DallasTemperature.h>
+
 bool DEBUG = true;
 
 /**
@@ -21,10 +24,14 @@ enum Pins {
   DOOR_PIN = 7,
   LIGHT_PIN = 0,
   MOTION_PIN = 8,
+  TEMPERATURE_BUS = 12,
   BUTTON_SPRAY = 4,
   BUTTON_ANALYSE = 3,
   BUTTON_MENU = 2
 };
+
+OneWire one_wire_bus(TEMPERATURE_BUS);
+DallasTemperature temperature_sensor(&one_wire_bus);
 
 enum Variables {
   MAX_TIME_NUMBER1 = 30000,
@@ -127,6 +134,17 @@ class Sensors {
   }
 
   /**
+   * Temperature sensors
+   */
+  static float get_temperature() {
+    temperature_sensor.requestTemperatures();
+    return temperature_sensor.getTempCByIndex(0);
+  }
+  static void display_temperature() {
+    Serial.println(Sensors::get_temperature());
+  }
+
+  /**
    * Air refreshener
    */
   static int amount_of_air_refreshener_sprays_left;
@@ -179,6 +197,7 @@ void setup()
   pinMode(Pins::BUTTON_SPRAY, INPUT_PULLUP);
   pinMode(Pins::BUTTON_ANALYSE, INPUT_PULLUP);
   pinMode(Pins::BUTTON_MENU, INPUT_PULLUP);
+  temperature_sensor.begin();
 }
 
 /**
@@ -192,6 +211,7 @@ void loop()
   if (Sensors::is_button_pressed(Pins::BUTTON_SPRAY)) { Sensors::switch_status(State::SPRAYING); }
   if (Sensors::is_button_pressed(Pins::BUTTON_ANALYSE)) { Sensors::switch_status(State::ANALYSING); }
   if (Sensors::is_button_pressed(Pins::BUTTON_MENU)) { Sensors::switch_status(State::MENU_ACTIVE); }
+  Sensors::display_temperature();
 
   /**
    * States
