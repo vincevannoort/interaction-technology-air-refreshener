@@ -3,8 +3,6 @@
 #include <LiquidCrystal.h>
 #include <DallasTemperature.h>
 
-bool DEBUG = true;
-
 /**
  * State
  */
@@ -514,7 +512,7 @@ void loop()
       Sensors::display_menu();
 
       // previous
-      // if (Sensors::is_button_pressed(Pins::BUTTON_NEXT)) { Sensors::switch_status(State::NOT_IN_USE); }
+      // if (Sensors::is_button_pressed( Pins::BUTTON_NEXT)) { Sensors::switch_status(State::NOT_IN_USE); }
 
       // next
       // if (Sensors::is_button_pressed(Pins::BUTTON_NEXT)) { Sensors::switch_status(State::NOT_IN_USE); }
