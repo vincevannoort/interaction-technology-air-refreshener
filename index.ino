@@ -55,7 +55,7 @@ enum Variables {
   MAX_TIME_NUMBER1 = 30000,
   TIME_BEFORE_MEASURING_AFTER_DOOR_CHANGE = 7500,
   LIGHT_THRESHOLD = 750,
-  INITIAL_EXTRA_SPRAY_DELAY = 500,
+  INITIAL_EXTRA_SPRAY_DELAY = 1000,
   INITIAL_NUMBER_OF_SPRAYS = 2400
 };
 
@@ -68,7 +68,7 @@ int current_menu_state = Menu::START;
  */
 // addresses
 int eea_sprays = 0;
-int eea_delay = 0;
+int eea_delay = 4;
 // data
 int dee_sprays = 0;
 int dee_delay = 0;
@@ -187,7 +187,7 @@ class Sensors {
   /**
    * Display
    */
-  static void display_temperature_and_shots() {
+  static void display_temperature_and_sprays() {
     lcd.setCursor(1, 0);
     lcd.print(" Temp: ");
     lcd.print(Sensors::get_temperature(), DEC);
@@ -196,9 +196,9 @@ class Sensors {
     lcd.setCursor(13, 0);
     lcd.print("C   ");
 
-    // shots
+    // sprays
     lcd.setCursor(1, 1);
-    lcd.print(" Shots: ");
+    lcd.print(" Sprays: ");
     lcd.print(Sensors::amount_of_air_refreshener_sprays_left);
   }
 
@@ -211,10 +211,14 @@ class Sensors {
       }
       case Menu::SPRAYS: {
         lcd.print("Menu: Sprays");
+        lcd.setCursor(1, 1);
+        lcd.print(Sensors::amount_of_air_refreshener_sprays_left);
         break;
       }
       case Menu::DELAY: {
         lcd.print("Menu: Delay");
+        lcd.setCursor(1, 1);
+        lcd.print(Sensors::delay_before_spraying);
         break;
       }
       case Menu::RESET: {
@@ -237,6 +241,7 @@ class Sensors {
   static int delay_before_spraying;
   static void spray_air_refreshener() {
     Sensors::amount_of_air_refreshener_sprays_left--;
+    Sensors::display_temperature_and_sprays();
     EEPROM.put(eea_sprays, Sensors::amount_of_air_refreshener_sprays_left);
     Sensors::set_rgb_led_color(255, 0, 0);
     digitalWrite(Pins::SPRAY_PIN, HIGH);
@@ -244,6 +249,14 @@ class Sensors {
     Sensors::set_rgb_led_color(255, 255, 255);
     digitalWrite(Pins::SPRAY_PIN, LOW);
     delay(1000);
+  }
+  static void adjust_amount_of_air_refreshener_sprays_left(int amount) {
+    Sensors::amount_of_air_refreshener_sprays_left += amount;
+    EEPROM.put(eea_sprays, Sensors::amount_of_air_refreshener_sprays_left);
+  }
+    static void adjust_delay_before_spraying(int amount) {
+    Sensors::delay_before_spraying += (Sensors::delay_before_spraying + amount > 0) ? amount : 0;
+    EEPROM.put(eea_delay, Sensors::delay_before_spraying);
   }
 
   /**
@@ -325,8 +338,8 @@ void loop()
   if (current_state != State::MENU_ACTIVE) {
     if (Sensors::is_button_pressed(Pins::BUTTON_PREVIOUS)) { Sensors::switch_status(State::SPRAYING); }
     if (Sensors::is_button_pressed(Pins::BUTTON_NEXT)) { Sensors::switch_status(State::NOT_IN_USE); }
-    if (Sensors::is_button_pressed(Pins::BUTTON_MENU)) { Sensors::switch_status(State::MENU_ACTIVE); }
-    Sensors::display_temperature_and_shots();
+    if (Sensors::is_button_pressed(Pins::BUTTON_MENU)) { current_menu_state = Menu::START; lcd.clear(); Sensors::switch_status(State::MENU_ACTIVE); }
+    Sensors::display_temperature_and_sprays();
     Sensors::print_debug_information_to_serial();
   }
 
@@ -511,9 +524,29 @@ void loop()
           break;
         }
         case Menu::SPRAYS: {
+          if (Sensors::is_button_pressed(Pins::BUTTON_NEXT)) {
+            Sensors::adjust_amount_of_air_refreshener_sprays_left(10);
+            Sensors::display_menu();
+            delay(100);
+          }
+          if (Sensors::is_button_pressed(Pins::BUTTON_PREVIOUS)) {
+            Sensors::adjust_amount_of_air_refreshener_sprays_left(-10);
+            Sensors::display_menu();
+            delay(100);
+          }
           break;
         }
         case Menu::DELAY: {
+          if (Sensors::is_button_pressed(Pins::BUTTON_NEXT)) {
+            Sensors::adjust_delay_before_spraying(10);
+            Sensors::display_menu();
+            delay(100);
+          }
+          if (Sensors::is_button_pressed(Pins::BUTTON_PREVIOUS)) {
+            Sensors::adjust_delay_before_spraying(-10);
+            Sensors::display_menu();
+            delay(100);
+          }
           break;
         }
         case Menu::RESET: {
