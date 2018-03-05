@@ -77,6 +77,9 @@ bool DOOR_STATUS_CHANGED = false;
 int PREVIOUS_ACTION = 0;
 int CURRENT_ACTION = millis();
 
+// TODO: MOVE INTO A BUEAITOSOFJ
+unsigned long previous_time_for_temp = 0;
+
 /**
  * Sensors  
  */
@@ -168,29 +171,34 @@ class Sensors {
    * Temperature sensors
    */
   static float get_temperature() {
-    temperature_sensor.requestTemperatures();
-    return temperature_sensor.getTempCByIndex(0);
+    static float current_temperature;
+    unsigned long current_time_for_temp = millis();
+
+    if (current_time_for_temp > previous_time_for_temp + 2000) {
+      temperature_sensor.requestTemperatures();
+      current_temperature = temperature_sensor.getTempCByIndex(0);
+      previous_time_for_temp = millis();
+    }
+
+    return current_temperature;
   }
 
   /**
    * Display
    */
   static void display_temperature_and_shots() {
-    if (lcd_update_count++ % 2000 == 0) {
-      // temperature
-      lcd.setCursor(1, 0);
-      lcd.print(" Temp: ");
-      // lcd.print(Sensors::get_temperature(), DEC);
-      lcd.setCursor(12, 0);
-      lcd.print((char)223);
-      lcd.setCursor(13, 0);
-      lcd.print("C   ");
+    lcd.setCursor(1, 0);
+    lcd.print(" Temp: ");
+    lcd.print(Sensors::get_temperature(), DEC);
+    lcd.setCursor(12, 0);
+    lcd.print((char)223);
+    lcd.setCursor(13, 0);
+    lcd.print("C   ");
 
-      // shots
-      lcd.setCursor(1, 1);
-      lcd.print(" Shots: ");
-      lcd.print(Sensors::amount_of_air_refreshener_sprays_left);
-    }
+    // shots
+    lcd.setCursor(1, 1);
+    lcd.print(" Shots: ");
+    lcd.print(Sensors::amount_of_air_refreshener_sprays_left);
   }
 
   static void display_menu() {
