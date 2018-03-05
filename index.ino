@@ -19,6 +19,7 @@ enum State {
 };
 
 enum Pins {
+  SPRAY_PIN = A1,
   RED_PIN = 11,
   GREEN_PIN = 10,
   BLUE_PIN = 9,
@@ -53,7 +54,7 @@ LiquidCrystal lcd(Pins::LCD_RS, Pins::LCD_EN, Pins::LCD_D4, Pins::LCD_D5, Pins::
 enum Variables {
   MAX_TIME_NUMBER1 = 30000,
   TIME_BEFORE_MEASURING_AFTER_DOOR_CHANGE = 7500,
-  LIGHT_THRESHOLD = 970,
+  LIGHT_THRESHOLD = 750,
   INITIAL_EXTRA_SPRAY_DELAY = 500,
   INITIAL_NUMBER_OF_SPRAYS = 2400
 };
@@ -238,9 +239,11 @@ class Sensors {
     Sensors::amount_of_air_refreshener_sprays_left--;
     EEPROM.put(eea_sprays, Sensors::amount_of_air_refreshener_sprays_left);
     Sensors::set_rgb_led_color(255, 0, 0);
-    delay(500);
+    digitalWrite(Pins::SPRAY_PIN, HIGH);
+    delay(1000);
     Sensors::set_rgb_led_color(255, 255, 255);
-    delay(500);
+    digitalWrite(Pins::SPRAY_PIN, LOW);
+    delay(1000);
   }
 
   /**
@@ -288,6 +291,7 @@ void setup()
 {
   // setup leds and serial
   Serial.begin(9600);
+  pinMode(Pins::SPRAY_PIN, OUTPUT);
   pinMode(Pins::RED_PIN, OUTPUT);
   pinMode(Pins::GREEN_PIN, OUTPUT);
   pinMode(Pins::BLUE_PIN, OUTPUT);
@@ -323,7 +327,7 @@ void loop()
     if (Sensors::is_button_pressed(Pins::BUTTON_NEXT)) { Sensors::switch_status(State::NOT_IN_USE); }
     if (Sensors::is_button_pressed(Pins::BUTTON_MENU)) { Sensors::switch_status(State::MENU_ACTIVE); }
     Sensors::display_temperature_and_shots();
-    // Sensors::print_debug_information_to_serial();
+    Sensors::print_debug_information_to_serial();
   }
 
   /**
