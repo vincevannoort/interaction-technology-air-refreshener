@@ -50,9 +50,9 @@ int lcd_update_count = 0;
 LiquidCrystal lcd(Pins::LCD_RS, Pins::LCD_EN, Pins::LCD_D4, Pins::LCD_D5, Pins::LCD_D6, Pins::LCD_D7);
 
 enum Variables {
-  MAX_TIME_NUMBER1 = 30000,
+  MAX_TIME_NUMBER1 = 40000,
   TIME_BEFORE_MEASURING_AFTER_DOOR_CHANGE = 7500,
-  LIGHT_THRESHOLD = 750,
+  LIGHT_THRESHOLD = 600,
   INITIAL_EXTRA_SPRAY_DELAY = 1000,
   INITIAL_NUMBER_OF_SPRAYS = 2400
 };
@@ -492,7 +492,6 @@ void loop()
        *  Second spray
        *  @when - previous state is number 2
        */
-
       if (previous_state == State::IN_USE_NUMBER2) {
         Sensors::spray_air_refreshener();
         Sensors::spray_air_refreshener();
